@@ -5,7 +5,7 @@ This is a custom cloud deployment and orchestration solution for google cloud(as
 This repository contains the spefication of the components involved. I will try to be as verbose as possible. This will bring clarity as to what a component can and can't do. The spefication file will have the name of the component and will be written in markdown language. The code base for the components will be available on github and the repository names will be prefixed with `ccd`(Custom Cloud Deploy).
 
 ### Components
-The components can be scripts (or/and) services the `ccd` framework provides. The components are as follows:
+The components can be scripts (or/and) services the `ccd` framework provides and uses to provide deployment and orchestration functionality. The components are as follows:
 
 #### machine-create-script
 This component contains the set of scripts to create a instance template(google cloud), instance group(google cloud), presistent disks, firewall rules etc. This component contains all the necessary configurations to create a VM on the cloud infrastructure. Disk management, network sandboxing will also be handled by this script.
