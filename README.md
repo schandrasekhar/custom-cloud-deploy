@@ -5,20 +5,32 @@ This is a custom cloud deployment and orchestration solution for google cloud(as
 This repository contains the spefication of the components involved. I will try to be as verbose as possible. This will bring clarity as to what a component can and can't do. The spefication file will have the name of the component and will be written in markdown language. The code base for the components will be available on github and the repository names will be prefixed with `ccd`(Custom Cloud Deploy).
 
 ### Components
-The components are as follows:
+The components can be scripts (or/and) services the `ccd` framework provides. The components are as follows:
 
 #### machine-create-script
 This component contains the set of scripts to create a instance template(google cloud), instance group(google cloud), presistent disks, firewall rules etc. This component contains all the necessary configurations to create a VM on the cloud infrastructure. Disk management, network sandboxing will also be handled by this script.
 
 #### artifact-create-script
-TODO
+This component builds the package including all the dependencies.
 
-#### process-monitor-script
+#### deploy-app-script
+This component deploys the respective application artifact to its respective virtual machine. This component will also handle hot cold deployments. Restarts if the virtual machine goes down.
+
+#### machine-monitor-service
+This monitors the health of the VM and does the required kill/restart operations.
+
+#### process-monitor-service
 This component monitors the health of the process. One can define various health checks for the process. If the health checks are not met the process is killed and restarted.
 
-#### log-collect-script
+#### dns-service
+This component has the ability to identify an application domain to its respective ip address group.
+
+#### log-collect-service
 This component collects the logs from various applications and stores them in a single place for future use.
 
 
+## Deployment Use Cases
+This framework will implement the following use cases
 
-
+### Deploy application to cloud
+TODO: create a xml workflow
