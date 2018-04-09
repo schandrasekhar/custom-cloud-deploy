@@ -22,6 +22,10 @@ This monitors the health of the VM and does the required kill/restart operations
 #### process-monitor-service
 This component monitors the health of the process. One can define various health checks for the process. If the health checks are not met the process is killed and restarted.
 
+#### resource-monitor-service
+This service monitors the resources(disk space, cpu usage, ram usage) for a given vm. If any threshold limits
+are crossed, it will trigger an action(say send email to admin).
+
 #### dns-service
 This component has the ability to identify an application domain to its respective ip address group.
 
