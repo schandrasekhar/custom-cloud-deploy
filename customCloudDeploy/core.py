@@ -83,18 +83,20 @@ def start_health_checks():
         start_app_deploy(config)
         add_app_to_load_balancer()
 
-def start_app_deploy(config):
-    if config.template_exists
+def start_app_deploy(app_config):
+    template_exists = check_if_template_exists(app_config.template)
+    if template_exists
         # no need to create vm instance template for application
-    create_vm_template()
-    config.vm_ip_list = create_vm_group(app_config.template)
-    save_ip_to_db(config.vm_ip_list)
-    if config.build_app_package
+    else
+        create_vm_template()
+    app_config.vm_ip_list = create_vm_group(app_config.template)
+    save_ip_to_db(app_config.vm_ip_list)
+    if app_config.build_app_package
         build_app_package()
     deploy_app_to_vm_group()
-    if !config.redeploy_app:
-        setup_health_checks(config)
-        start_health_checks(config)
+    if !app_config.redeploy_app:
+        setup_health_checks(app_config)
+        start_health_checks(app_config)
 
 
 
@@ -102,7 +104,6 @@ def start_app_deploy(config):
 deployement_config = {}
 app_config = get_app_config()
 
-deployement_config.template_exists = check_if_template_exists(app_config.template)
 deployement_config.build_app_package = True
 deployement_config.redeploy_app = False
 start_app_deploy(deployement_config)
@@ -117,4 +118,47 @@ application build/package server (1 server)
 health check servers (3 servers monitor each other with master slave configuration)
 log server (1 server)
 internal load balancer server (1 server)
+'''
+
+
+'''
+google cloud specific implementation details
+-> application configuration database
+    - mongodb DISK
+    - mongodb CUSTOM IMAGE
+    - INSTANCE TEMPLATE
+    - INSTANCE GROUP
+    - Google Cloud Storage for storing startup, stop scripts
+
+ ----------------------   
+
+-> application deployment server
+    - deployment DISK image
+    - INSTANCE TEMPLATE
+    - INSTANCE VM
+
+-> application build/package server
+    - deployment DISK image
+    - INSTANCE TEMPLATE
+    - INSTANCE VM
+
+-> health check servers
+    - deployment DISK image
+    - INSTANCE TEMPLATE
+    - INSTANCE GROUP
+
+-> log server
+    - deployment DISK image
+    - INSTANCE TEMPLATE
+    - INSTANCE VM
+
+-> internal load balancer server
+    - deployment DISK image
+    - INSTANCE TEMPLATE
+    - INSTANCE VM
+
+-> external load balancer server
+    - deployment DISK image
+    - INSTANCE TEMPLATE
+    - INSTANCE VM
 '''
