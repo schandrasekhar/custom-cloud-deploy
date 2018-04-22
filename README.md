@@ -33,8 +33,9 @@ This component has the ability to identify an application domain to its respecti
 This component collects the logs from various applications and stores them in a single place for future use.
 
 
-## Deployment Use Cases
-This framework will implement the following use cases
-
 ### Deploy application to cloud
 TODO: create a xml workflow
+
+
+### TODOS
+- create api end points for gcloud api in python. Check core.py file for more TODOS

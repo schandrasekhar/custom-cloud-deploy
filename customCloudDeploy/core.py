@@ -130,7 +130,7 @@ google cloud specific implementation details
     - INSTANCE GROUP
     - Google Cloud Storage for storing startup, stop scripts
 
- ----------------------   
+ ----------------------
 
 -> application deployment server
     - deployment DISK image
