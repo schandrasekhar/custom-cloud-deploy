@@ -31,101 +31,29 @@ import time
 import googleapiclient.discovery
 from six.moves import input
 
+import gcloudapis.compute.instance_template
 
-# [START list_instances]
-def list_instances(compute, project, zone):
-    result = compute.instances().list(project=project, zone=zone).execute()
-    return result['items']
-# [END list_instances]
+from gcloudapis.compute.instance_template import create_instance_template
+from gcloudapis.compute.instance_template import delete_instance_template
+from gcloudapis.compute.instance_template import list_instance_templates
+from gcloudapis.compute.instance_template import delete_instance_template
 
-
-# [START create_instance]
-def create_instance(compute, project, zone, name, bucket):
-    # Get the latest Debian Jessie image.
-    image_response = compute.images().getFromFamily(
-        project='debian-cloud', family='debian-8').execute()
-    source_disk_image = image_response['selfLink']
-
-    # Configure the machine
-    machine_type = "zones/%s/machineTypes/n1-standard-1" % zone
-    startup_script = open(
-        os.path.join(
-            os.path.dirname(__file__), 'startup-script.sh'), 'r').read()
-    image_url = "http://storage.googleapis.com/gce-demo-input/photo.jpg"
-    image_caption = "Ready for dessert?"
-
-    config = {
-        'name': name,
-        'machineType': machine_type,
-
-        # Specify the boot disk and the image to use as a source.
-        'disks': [
-            {
-                'boot': True,
-                'autoDelete': True,
-                'initializeParams': {
-                    'sourceImage': source_disk_image,
-                }
-            }
-        ],
-
-        # Specify a network interface with NAT to access the public
-        # internet.
-        'networkInterfaces': [{
-            'network': 'global/networks/default',
-            'accessConfigs': [
-                {'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}
-            ]
-        }],
-
-        # Allow the instance to access cloud storage and logging.
-        'serviceAccounts': [{
-            'email': 'default',
-            'scopes': [
-                'https://www.googleapis.com/auth/devstorage.read_write',
-                'https://www.googleapis.com/auth/logging.write'
-            ]
-        }],
-
-        # Metadata is readable from the instance and allows you to
-        # pass configuration from deployment scripts to instances.
-        'metadata': {
-            'items': [{
-                # Startup script is automatically executed by the
-                # instance upon startup.
-                'key': 'startup-script',
-                'value': startup_script
-            }, {
-                'key': 'url',
-                'value': image_url
-            }, {
-                'key': 'text',
-                'value': image_caption
-            }, {
-                'key': 'bucket',
-                'value': bucket
-            }]
-        }
-    }
-
-    return compute.instances().insert(
-        project=project,
-        zone=zone,
-        body=config).execute()
-# [END create_instance]
+from gcloudapis.compute.instance import create_instance
+from gcloudapis.compute.instance import list_instances
+from gcloudapis.compute.instance import delete_instance
 
 
-# [START delete_instance]
-def delete_instance(compute, project, zone, name):
-    return compute.instances().delete(
-        project=project,
-        zone=zone,
-        instance=name).execute()
-# [END delete_instance]
+from gcloudapis.compute.disk import create_disk
+from gcloudapis.compute.disk import list_disks
+from gcloudapis.compute.disk import delete_disk
+
+from gcloudapis.compute.image import create_image
+from gcloudapis.compute.image import list_images
+from gcloudapis.compute.image import delete_image
 
 
 # [START wait_for_operation]
-def wait_for_operation(compute, project, zone, operation):
+def wait_for_zone_operation(compute, project, zone, operation):
     print('Waiting for operation to finish...')
     while True:
         result = compute.zoneOperations().get(
@@ -142,15 +70,29 @@ def wait_for_operation(compute, project, zone, operation):
         time.sleep(1)
 # [END wait_for_operation]
 
+def wait_for_global_operation(compute, project, operation):
+    print('Waiting for operation to finish...')
+    while True:
+        result = compute.globalOperations().get(
+            project=project,
+            operation=operation).execute()
 
-# [START run]
-def main(project, bucket, zone, instance_name, wait=True):
+        if result['status'] == 'DONE':
+            print("done.")
+            if 'error' in result:
+                raise Exception(result['error'])
+            return result
+
+        time.sleep(1)
+
+
+
+def instance(project, bucket, zone, instance_name, wait=True):
     compute = googleapiclient.discovery.build('compute', 'v1')
 
     print('Creating instance.')
-
     operation = create_instance(compute, project, zone, instance_name, bucket)
-    wait_for_operation(compute, project, zone, operation['name'])
+    wait_for_zone_operation(compute, project, zone, operation['name'])
 
     instances = list_instances(compute, project, zone)
 
@@ -171,7 +113,110 @@ Once the image is uploaded press enter to delete the instance.
     print('Deleting instance.')
 
     operation = delete_instance(compute, project, zone, instance_name)
-    wait_for_operation(compute, project, zone, operation['name'])
+    wait_for_zone_operation(compute, project, zone, operation['name'])
+
+
+
+
+
+def instance_template(project, instance_name, wait=True):
+    compute = googleapiclient.discovery.build('compute', 'v1')
+    print('Creating instance template')
+    operation = create_instance_template(compute, project, instance_name)
+
+    wait_for_global_operation(compute, project, operation['name'])
+    instances = list_instance_templates(compute, project)
+
+
+    print('Instances in project %s:' % (project))
+    for instance in instances:
+        print(' - ' + instance['name'])
+
+    print("""
+Instance created.
+It will take a minute or two for the instance to complete work.
+Once the image is uploaded press enter to delete the instance.
+""")
+
+    if wait:
+        input()
+
+    print('Deleting instance.')
+
+    operation = delete_instance_template(compute, project, instance_name)
+    wait_for_global_operation(compute, project, operation['name'])
+
+
+
+def disk(project, zone, instance_name, wait):
+    compute = googleapiclient.discovery.build('compute', 'v1')
+    print('Creating disk')
+    operation = create_disk(compute, project, zone, instance_name)
+
+    wait_for_zone_operation(compute, project, zone, operation['name'])
+
+    instances = list_disks(compute, project, zone)
+
+    print('Instances in project %s and zone %s:' % (project, zone))
+    for instance in instances:
+        print(' - ' + instance['name'])
+
+    print("""
+Instance created.
+It will take a minute or two for the instance to complete work.
+Once the image is uploaded press enter to delete the instance.
+""")
+
+    if wait:
+        input()
+
+    print('Deleting disk.')
+
+    operation = delete_disk(compute, project, zone, instance_name)
+    wait_for_zone_operation(compute, project, zone, operation['name'])
+
+
+def image(project, instance_name, wait):
+    compute = googleapiclient.discovery.build('compute', 'v1')
+    print('Creating image')
+    operation = create_image(compute, project, instance_name)
+
+    wait_for_global_operation(compute, project, operation['name'])
+
+    instances = list_images(compute, project, zone)
+
+    print('Images in project %s:' % (project))
+    for instance in instances:
+        print(' - ' + instance['name'])
+
+    print("""
+Instance created.
+It will take a minute or two for the instance to complete work.
+Once the image is uploaded press enter to delete the instance.
+""")
+
+    if wait:
+        input()
+
+    print('Deleting image.')
+
+    operation = delete_image(compute, project, instance_name)
+    wait_for_global_operation(compute, project, operation['name'])
+
+
+
+
+
+
+# [START run]
+def main(project, bucket, zone, instance_name, wait=True):
+    # instance(project, bucket, zone, instance_name, wait)
+    # instance_template(project, instance_name, wait)
+    # disk(project, zone, instance_name, wait)
+    image(project, instance_name, wait)
+
+
+
 
 
 if __name__ == '__main__':
